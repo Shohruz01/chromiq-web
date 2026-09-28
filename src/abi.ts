@@ -11,7 +11,6 @@ export const chromiqAbi = [
     ],
     outputs: [],
   },
-
   {
     type: "function",
     name: "mintPrice",
@@ -24,7 +23,6 @@ export const chromiqAbi = [
       },
     ],
   },
-
   {
     type: "function",
     name: "totalMinted",
@@ -37,7 +35,6 @@ export const chromiqAbi = [
       },
     ],
   },
-
   {
     type: "function",
     name: "mintOpen",
@@ -50,7 +47,6 @@ export const chromiqAbi = [
       },
     ],
   },
-
   {
     type: "function",
     name: "tokenURI",
@@ -68,7 +64,23 @@ export const chromiqAbi = [
       },
     ],
   },
-
+  {
+    type: "function",
+    name: "previewTokenURI",
+    stateMutability: "view",
+    inputs: [
+      {
+        name: "tokenId",
+        type: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "",
+        type: "string",
+      },
+    ],
+  },
   {
     type: "function",
     name: "ownerOf",
