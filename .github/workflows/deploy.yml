@@ -26,11 +26,16 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Fetch Top Sales
+        run: node scripts/fetch-top-sales.mjs
+        env:
+          OPENSEA_API_KEY: ${{ secrets.OPENSEA_API_KEY }}
 
       - name: Build
         run: npm run build

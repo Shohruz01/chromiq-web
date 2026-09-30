@@ -3,251 +3,297 @@
 import { useEffect, useState } from "react";
 
 type Sale = {
-tokenId: number;
-name: string;
-image: string;
-price: number;
-symbol: string;
-seller: string;
-buyer: string;
-transaction: string;
-timestamp: number;
-openseaUrl: string;
+  tokenId: number;
+  name: string;
+  image: string;
+  price: number;
+  symbol: string;
+  seller: string;
+  buyer: string;
+  transaction: string;
+  timestamp: number;
+  openseaUrl: string;
+  basescanUrl: string;
 };
 
-function shorten(address: string) {
-if (!address) return "Unknown";
-
-return "${address.slice(0, 6)}...${address.slice(-4)}";
-}
+type SalesResponse = {
+  contract: string;
+  chain: string;
+  collection: string;
+  count: number;
+  sales: Sale[];
+  source: string;
+};
 
 function formatPrice(price: number, symbol: string) {
-if (price === 0) return "0 ${symbol}";
+  if (price < 0.001) {
+    return `${price.toFixed(6)} ${symbol}`;
+  }
 
-return "${price.toLocaleString(undefined, { maximumFractionDigits: 6, })} ${symbol}";
+  if (price < 0.01) {
+    return `${price.toFixed(4)} ${symbol}`;
+  }
+
+  return `${price.toFixed(3)} ${symbol}`;
 }
 
 function formatDate(timestamp: number) {
-if (!timestamp) return "";
+  if (!timestamp) return "";
 
-return new Date(timestamp * 1000).toLocaleDateString(
-undefined,
-{
-year: "numeric",
-month: "short",
-day: "numeric",
+  return new Date(timestamp * 1000).toLocaleDateString(
+    undefined,
+    {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }
+  );
 }
-);
+
+function shortenAddress(address: string) {
+  if (!address) return "";
+
+  if (address.length <= 12) {
+    return address;
+  }
+
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
 export default function TopSales() {
-const [sales, setSales] = useState<Sale[]>([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState("");
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-async function loadSales() {
-try {
-setLoading(true);
-setError("");
+  useEffect(() => {
+    async function loadSales() {
+      try {
+        setLoading(true);
+        setError("");
 
-  const response = await fetch(
-    "/api/top-sales",
-    {
-      cache: "no-store",
+        const response = await fetch("/top-sales.json", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Could not load sales (${response.status})`
+          );
+        }
+
+        const data: SalesResponse =
+          await response.json();
+
+        if (!Array.isArray(data.sales)) {
+          throw new Error(
+            "Invalid top-sales.json format."
+          );
+        }
+
+        setSales(data.sales);
+      } catch (err) {
+        console.error("Top Sales error:", err);
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Could not load top sales."
+        );
+      } finally {
+        setLoading(false);
+      }
     }
-  );
 
-  const data = await response.json();
+    loadSales();
+  }, []);
 
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-        "Could not load sales."
+  if (loading) {
+    return (
+      <section className="w-full">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold">
+            Top Sales
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Loading highest Chromiq sales...
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: 8 }).map(
+            (_, index) => (
+              <div
+                key={index}
+                className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
+              >
+                <div className="aspect-square animate-pulse bg-gray-200" />
+
+                <div className="space-y-3 p-4">
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-gray-200" />
+
+                  <div className="h-5 w-1/2 animate-pulse rounded bg-gray-200" />
+
+                  <div className="h-3 w-3/4 animate-pulse rounded bg-gray-200" />
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      </section>
     );
   }
 
-  setSales(data.sales || []);
-} catch (error) {
-  console.error("Top sales error:", error);
+  if (error) {
+    return (
+      <section className="w-full">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
+          <h2 className="text-lg font-semibold text-red-700">
+            Top Sales
+          </h2>
 
-  setError(
-    "Could not load real OpenSea sales."
-  );
-} finally {
-  setLoading(false);
-}
+          <p className="mt-2 text-sm text-red-600">
+            {error}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
-}
+  if (sales.length === 0) {
+    return (
+      <section className="w-full">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
+          <h2 className="text-xl font-semibold">
+            Top Sales
+          </h2>
 
-useEffect(() => {
-loadSales();
-}, []);
+          <p className="mt-2 text-sm text-gray-500">
+            No sales found.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
-return (
-<section className="mt-24">
-<div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-<div>
-<p className="text-xs uppercase tracking-[0.3em] text-white/40">
-Marketplace
-</p>
+  return (
+    <section className="w-full">
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold">
+            Top Sales
+          </h2>
 
-      <h2 className="mt-2 text-4xl font-black tracking-tight">
-        Top Sales
-      </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Highest real Chromiq NFT sales
+          </p>
+        </div>
 
-      <p className="mt-2 text-sm text-white/40">
-        Highest recorded Chromiq sales on OpenSea
-      </p>
-    </div>
-
-    <a
-      href="https://opensea.io/collection/chromiq"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-sm font-semibold text-white/50 transition hover:text-white"
-    >
-      View on OpenSea →
-    </a>
-  </div>
-
-  {loading && (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-      {Array.from({ length: 8 }).map(
-        (_, index) => (
-          <div
-            key={index}
-            className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03]"
-          >
-            <div className="aspect-square animate-pulse bg-white/[0.06]" />
-
-            <div className="space-y-3 p-4">
-              <div className="h-4 w-2/3 animate-pulse rounded bg-white/[0.06]" />
-              <div className="h-7 w-1/2 animate-pulse rounded bg-white/[0.06]" />
-              <div className="h-3 w-3/4 animate-pulse rounded bg-white/[0.06]" />
-            </div>
-          </div>
-        )
-      )}
-    </div>
-  )}
-
-  {!loading && error && (
-    <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
-      <p className="text-sm text-white/50">
-        {error}
-      </p>
-
-      <button
-        type="button"
-        onClick={loadSales}
-        className="mt-5 rounded-full border border-white/20 px-5 py-2 text-sm font-semibold transition hover:border-white/40"
-      >
-        Try again
-      </button>
-    </div>
-  )}
-
-  {!loading &&
-    !error &&
-    sales.length === 0 && (
-      <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
-        <p className="text-sm text-white/50">
-          No OpenSea sales found yet.
-        </p>
+        <div className="text-xs text-gray-400">
+          OpenSea
+        </div>
       </div>
-    )}
 
-  {!loading &&
-    !error &&
-    sales.length > 0 && (
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         {sales.map((sale, index) => (
           <article
-            key={`${sale.tokenId}-${sale.transaction}`}
-            className="group overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] transition duration-300 hover:-translate-y-1 hover:border-white/25"
+            key={`${sale.tokenId}-${sale.transaction}-${index}`}
+            className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
           >
-            <a
-              href={sale.openseaUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block"
-            >
-              <div className="relative aspect-square overflow-hidden bg-black">
-                {sale.image ? (
-                  <img
-                    src={sale.image}
-                    alt={sale.name}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-white/30">
-                    No image
-                  </div>
-                )}
-
-                <div className="absolute left-3 top-3 rounded-full border border-white/10 bg-black/70 px-3 py-1.5 text-xs font-bold backdrop-blur">
-                  #{index + 1}
+            <div className="relative aspect-square overflow-hidden bg-gray-100">
+              {sale.image ? (
+                <img
+                  src={sale.image}
+                  alt={sale.name}
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                  loading={
+                    index < 4
+                      ? "eager"
+                      : "lazy"
+                  }
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-sm text-gray-400">
+                  No image
                 </div>
+              )}
 
-                <div className="absolute right-3 top-3 rounded-full border border-white/10 bg-black/70 px-3 py-1.5 text-xs font-bold backdrop-blur">
-                  #{sale.tokenId}
-                </div>
+              <div className="absolute left-3 top-3 rounded-full bg-black/75 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
+                #{index + 1}
               </div>
-            </a>
+            </div>
 
             <div className="p-4">
-              <h3 className="truncate font-bold">
-                {sale.name}
-              </h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="truncate text-sm font-semibold text-gray-900">
+                  {sale.name}
+                </h3>
 
-              <div className="mt-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
+                <span className="shrink-0 text-xs text-gray-400">
+                  #{sale.tokenId}
+                </span>
+              </div>
+
+              <div className="mt-3">
+                <p className="text-xs uppercase tracking-wide text-gray-400">
                   Sale Price
                 </p>
 
-                <p className="mt-1 text-xl font-black">
+                <p className="mt-1 text-lg font-bold text-gray-900">
                   {formatPrice(
                     sale.price,
                     sale.symbol
                   )}
                 </p>
-
-                <p className="mt-1 text-xs text-white/30">
-                  {formatDate(
-                    sale.timestamp
-                  )}
-                </p>
               </div>
+
+              {sale.seller && (
+                <div className="mt-3">
+                  <p className="text-xs text-gray-400">
+                    Seller
+                  </p>
+
+                  {sale.basescanUrl ? (
+                    <a
+                      href={sale.basescanUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-600 hover:underline"
+                    >
+                      {shortenAddress(
+                        sale.seller
+                      )}
+                    </a>
+                  ) : (
+                    <p className="text-xs text-gray-600">
+                      {shortenAddress(
+                        sale.seller
+                      )}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {sale.timestamp > 0 && (
+                <p className="mt-3 text-xs text-gray-400">
+                  {formatDate(sale.timestamp)}
+                </p>
+              )}
 
               <div className="mt-4">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/30">
-                  Seller
-                </p>
-
                 <a
-                  href={`https://basescan.org/address/${sale.seller}`}
+                  href={sale.openseaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1 block truncate font-mono text-xs text-white/40 transition hover:text-white"
+                  className="block rounded-xl bg-black px-4 py-2.5 text-center text-sm font-medium text-white transition hover:bg-gray-800"
                 >
-                  {shorten(sale.seller)}
+                  View on OpenSea
                 </a>
               </div>
-
-              <a
-                href={sale.openseaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 block rounded-full border border-white/10 py-2.5 text-center text-xs font-bold text-white/60 transition hover:border-white/25 hover:text-white"
-              >
-                View Sale →
-              </a>
             </div>
           </article>
         ))}
       </div>
-    )}
-</section>
-
-);
+    </section>
+  );
 }
