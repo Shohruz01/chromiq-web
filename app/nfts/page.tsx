@@ -232,7 +232,7 @@ export default function NFTsPage() {
         </footer>
       </div>
 
-      <style jsx>{`
+      <style>{`
         * {
           box-sizing: border-box;
         }
