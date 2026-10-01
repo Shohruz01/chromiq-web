@@ -428,21 +428,21 @@ export default function Home() {
 
         <TopSales />
 
-        <footer className="border-t border-white/10 pt-6 text-xs text-white/30">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+         <footer className="mt-20 border-t border-white/10 pt-6 pb-4 text-xs text-white/30">
+  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-            <span>CHROMIQ © 2026</span>
+    <span>CHROMIQ © 2026</span>
 
-            <span>
-              Contract · {CHROMIQ_CONTRACT}
-            </span>
+    <span>
+      Base · Fully On-Chain
+    </span>
 
-            <span>
-              Mint: {mintOpen ? "OPEN" : "CLOSED"}
-            </span>
+    <span className="break-all">
+      Contract · {CHROMIQ_CONTRACT}
+    </span>
 
-          </div>
-        </footer>
+  </div>
+</footer>
 
       </section>
     </main>
