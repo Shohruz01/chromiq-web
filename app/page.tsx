@@ -252,6 +252,13 @@ export default function Home() {
                   {mintButtonLabel}
                 </button>
 
+                <a
+                  href="/nfts/"
+                  className="rounded-full border border-white/15 bg-white/[0.03] px-7 py-4 text-sm font-bold text-white transition hover:border-white/30 hover:bg-white/10 hover:scale-[1.02]"
+                >
+                  About Chromiq ↗
+                </a>
+
                 <div className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-3">
 
                   <button
